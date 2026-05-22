@@ -16,6 +16,10 @@ The repository is intended to make the artifact citable and discoverable for the
 
 This standalone snapshot also adds a minimal `lean-toolchain` and `lakefile.lean` so that the Lean files can be built outside the larger research workspace.
 
+## License
+
+This repository is licensed under the Apache License 2.0. See [`LICENSE.txt`](LICENSE.txt).
+
 ## What is formalized here?
 
 The Management Science artifact formalizes the local classical-lottery and matching-frequency infrastructure, together with the public theorem boundaries used in the paper. Its design is intentionally audit-friendly: the deep non-local representation-theoretic ingredients are exposed as **named bridge hypotheses**, rather than hidden behind opaque axioms.

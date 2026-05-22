@@ -7,9 +7,11 @@ This repository packages the Lean 4 artifact developed by the **paper authors** 
 > **Management Science**, Articles in Advance, published online 15 May 2026.
 > DOI: [10.1287/mnsc.2023.04202](https://doi.org/10.1287/mnsc.2023.04202)
 
-The repository is intended to make the artifact citable and discoverable for the formal-methods community. It contains the two main Lean source files discussed in the paper, together with two PDF companions:
+The repository is intended to make the artifact citable and discoverable for the formal-methods community. It contains the main Lean source files for the Management Science artifact and the Wakker / Debreu--Koopmans spin-out, together with two PDF companions:
 
 - `ClassicalLotteryInAction.lean` — the Management Science Lean artifact.
+- `WakkerInfrastructure.lean` — fully proved infrastructure for product preferences, standard sequences, solvability, tradeoff consistency, convexity/concavity scaffolding, and the first-layer consequences of the Wakker construction certificate.
+- `WakkerExistence.lean` — the structural-axioms-only existence-side seed for Wakker (1989) Theorem IV.2.7 in the spin-out development.
 - `WakkerDebreuKoopmans.lean` — the imported Wakker / Debreu--Koopmans wrapper layer.
 - `LeanCompanionClassicalLotteryInAction.pdf` — the short companion note focused on the named-bridge interface and axiom audit.
 - `MechanizedDecisionTheoryWakkerDK.pdf` — the ongoing spin-out note on the deeper Wakker / Debreu--Koopmans certificate layer.
@@ -44,7 +46,7 @@ A live Lean axiom audit of the public theorem surface reports only the standard 
 | Paper §2.5 **A Note on Model Elicitation** and Appendix §5.4 **Rational Matching Frequencies** | `ClassicalLotteryInAction.lean`, `§App.4 Solvability` | Encoded as Axiom 8 (`Solvability`) together with boundary lemmas about rational matching classical lotteries. |
 | Paper §2.6 **Ambiguity Attitudes** | `ClassicalLotteryInAction.lean`, theorem `prop_aversion_or_seeking` | Formalizes the ambiguity-attitude proposition. The behavioral-to-curvature recovery direction is isolated as `AmbiguityAttitudeCurvatureBridge`. |
 | Appendix proofs for Proposition 1 / Lemma 1 / Theorem 1 / Proposition 2 | Spread across `ClassicalLotteryInAction.lean` local lemmas and theorem wrappers | The artifact checks the theorem-level reductions and local arguments while keeping the genuinely non-local representation steps visibly parameterized. |
-| Imported Wakker / Debreu--Koopmans layer | `WakkerDebreuKoopmans.lean` and `MechanizedDecisionTheoryWakkerDK.pdf` | This is the deeper certificate layer. The ongoing spin-out tracks named certificates such as `hConstruct`, `hglobal`, `haff`, `hConc`, and `hPairConc`. |
+| Imported Wakker / Debreu--Koopmans layer | `WakkerInfrastructure.lean`, `WakkerExistence.lean`, `WakkerDebreuKoopmans.lean`, and `MechanizedDecisionTheoryWakkerDK.pdf` | This is the deeper certificate layer. `WakkerInfrastructure.lean` provides the proved scaffolding and first-layer consequences; `WakkerExistence.lean` starts the construction side; `WakkerDebreuKoopmans.lean` packages the wrapper/consumer theorems; and the spin-out note tracks named certificates such as `hConstruct`, `hglobal`, `haff`, `hConc`, and `hPairConc`. |
 | Paper §3 **Illustration** and §4 **Conclusion** | Not separately mechanized in this compact repository snapshot | These sections remain part of the published paper’s economic exposition rather than separate Lean modules. |
 
 ## Running the Lean files locally
@@ -69,6 +71,8 @@ lake build
 
 ```text
 lake env lean ClassicalLotteryInAction.lean
+lake env lean WakkerInfrastructure.lean
+lake env lean WakkerExistence.lean
 lake env lean WakkerDebreuKoopmans.lean
 ```
 
@@ -80,7 +84,7 @@ For quick inspection in the Lean Web Editor:
 
 1. Open [https://live.lean-lang.org/](https://live.lean-lang.org/).
 2. Ensure the editor is using Lean `v4.28.0-rc1` (the version recorded in `lean-toolchain`).
-3. Paste the contents of either `ClassicalLotteryInAction.lean` or `WakkerDebreuKoopmans.lean` into the editor.
+3. Paste the contents of any of `ClassicalLotteryInAction.lean`, `WakkerInfrastructure.lean`, `WakkerExistence.lean`, or `WakkerDebreuKoopmans.lean` into the editor.
 4. Let the editor fetch Mathlib if prompted.
 
 This is best for browsing declarations or quick typechecking of a single file. For the reproducible project setup, use the local `lake` workflow above.
@@ -88,6 +92,7 @@ This is best for browsing declarations or quick typechecking of a single file. F
 ## Companion note and W/DK spin-out
 
 - `LeanCompanionClassicalLotteryInAction.pdf` explains the public theorem surface, the named-bridge interface, and the axiom-audit table.
+- `WakkerInfrastructure.lean` and `WakkerExistence.lean` expose the proved infrastructure and the construction-side seed for the separate W/DK mechanization track.
 - `MechanizedDecisionTheoryWakkerDK.pdf` records the deeper Wakker / Debreu--Koopmans certificate program as ongoing work, without changing the stable public interface consumed by `ClassicalLotteryInAction.lean`.
 
 ## Citation

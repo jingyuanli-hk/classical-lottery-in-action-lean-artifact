@@ -8,4 +8,5 @@ require mathlib from git
 
 @[default_target]
 lean_lib ClassicalLotteryLeanArtifact where
-  roots := #[`ClassicalLotteryInAction, `WakkerDebreuKoopmans]
+  roots := #[`ClassicalLotteryInAction, `WakkerDebreuKoopmans,
+    `WakkerInfrastructure, `WakkerExistence]

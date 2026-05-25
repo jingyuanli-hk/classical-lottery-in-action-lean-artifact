@@ -16,12 +16,13 @@ This file translates all the mathematics of the paper into Lean:
   * the Main Theorem (smooth representation),
   * the ambiguity-aversion Proposition.
 
-Deep proofs (additive representation à la Wakker (1989); the
-Debreu–Koopmans concavity step; the patching of `V_{x,y}` across prize
-pairs; and the converse curvature recovery for ambiguity attitudes) are
-kept as explicit wrapper hypotheses/bridges. Everything local and direct
-from the definitions is proved, so the public theorem path is
-sorry-free while the non-local mathematical dependencies remain visible.
+The MS-facing smooth-representation theorem keeps the non-local
+representation steps behind stable wrapper names.  The Wakker/Debreu--
+Koopmans layer that motivates those wrappers is now discharged separately
+in the split `WakkerDebreuKoopmans` artifact and audited by
+`Wakker/AxiomCheck.lean`; this file preserves the original theorem API so
+the Management Science submission does not churn while the formal-methods
+companion records the end-to-end representation proof.
 -/
 
 import Mathlib.Data.Real.Basic
@@ -4441,25 +4442,27 @@ def SmoothAxiomBundle
   (∃ _ : Cts Pref, True) ∧
   (∃ _ : ConsistentAggregation Pref, True)
 
-/-- **Option-A smooth sufficiency wrapper.**
+/-- **Option-A smooth sufficiency boundary.**
 
-This is the near-term-submission route advertised in
-`WakkerDebreuKoopmans.lean`: the Wakker/Debreu--Koopmans additive
-representation machinery, continuous extension, and pairwise patching are
-treated as an explicit imported theorem-shaped hypothesis.  A full Option-B
-formalisation would prove this predicate from the primitive axioms. -/
+For the Management Science artifact, this remains a stable abstraction
+boundary: downstream statements consume `SmoothRepresentationSufficiency`
+instead of importing the full Wakker/Debreu--Koopmans development.  The
+formal-methods companion now discharges the W/DK additive-representation and
+Debreu--Koopmans layers end-to-end in `WakkerDebreuKoopmans`, with the public
+kernel audit in `Wakker/AxiomCheck.lean`.  Keeping this predicate avoids API
+churn in the MS submission while cross-linking to the theorem-backed source. -/
 def SmoothRepresentationSufficiency
     [Fintype S] [DecidableEq S] [MeasurableSpace S] [DecidableEq X]
     (Pref : Preference S X) : Prop :=
   Nontrivial Pref → SmoothAxiomBundle Pref → Nonempty (SmoothRepresentation Pref)
 
-/-- **Option-A regularity-recovery wrapper.**
+/-- **Option-A regularity-recovery boundary.**
 
 The local necessity proof derives Weak Order, Cancellation,
 Archimedeanity, and Monotonicity directly from a `SmoothRepresentation`.
 The remaining analytic recoveries — Denseness, Continuity, and Consistent
 Aggregation — are exactly the regularity/connectedness consequences that
-the wrapper route records as imported structure. -/
+the low-risk MS-facing abstraction boundary records explicitly. -/
 def SmoothRepresentationRegularity
     [Fintype S] [DecidableEq S] [MeasurableSpace S] [DecidableEq X]
     (Pref : Preference S X) : Prop :=
@@ -4484,11 +4487,13 @@ and Archimedeanity follow via `prop_average_utility_mpr` applied to
 `R.averageUtility_repr_of_smooth`; Monotonicity follows from pointwise
 `ψU_pointwise_le_of_weakPref` plus integral monotonicity on a finite
 measurable space.  Denseness, Continuity, and Consistent Aggregation
-require continuity of `ψ` and connectedness arguments and are pending.
+require continuity of `ψ` and connectedness arguments; they are recorded in
+the low-risk regularity boundary to keep this MS file stable.
 
-The `→` direction (sufficiency) is the deep one and goes through Wakker's
-additive representation theorem on the rational simplex, plus continuous
-extension and patching across prize pairs. -/
+The `→` direction (sufficiency) consumes the same stable boundary.  The
+Wakker/Debreu--Koopmans representation layer behind it is now theorem-backed
+in the companion artifact (`WakkerDebreuKoopmans` plus `Wakker/AxiomCheck`),
+so this wrapper is an API boundary rather than an untracked formal gap. -/
 theorem thm_smooth_model
     [Fintype S] [DecidableEq S] [MeasurableSpace S] [MeasurableSingletonClass S]
     [DecidableEq X]

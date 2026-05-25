@@ -1,0 +1,173 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,citecolor=blue,linkcolor=blue,urlcolor=blue]{hyperref}
+\usepackage{microtype}
+
+\geometry{margin=1in}
+\urlstyle{same}
+\sloppy
+
+\newcommand{\Lean}{\textsc{Lean}}
+\newcommand{\Mathlib}{\textsc{Mathlib}}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\codestack}[2]{\shortstack[l]{\code{#1}\\\code{#2}}}
+\newcommand{\foundations}{[\code{propext}, \code{Classical.choice}, \code{Quot.sound}]}
+
+\title{A Lean companion to Classical Lottery in Action}
+\author{Jingyuan Li\thanks{Lingnan University, Hong Kong. jingyuanli@ln.edu.hk},
+\ Ilia Tsetlin\thanks{INSEAD, Singapore. ilia.tsetlin@insead.edu},
+\ Fan Wang\thanks{ESSEC Business School, Singapore. wang.fan@essec.edu}}
+\date{May 22, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note documents the \Lean~4 artifact \code{ClassicalLotteryInAction.lean} accompanying the published Management Science paper \emph{Classical Lottery in Action: Quantifying Risk and Evaluating Uncertainty}.  The artifact formalizes the local classical-lottery infrastructure, the average-utility consequences used for classical lotteries, matching-frequency constructions for two-prize acts, and the public wrapper statements for the smooth-ambiguity representation and ambiguity-attitude results.  Its main design choice is audit transparency: non-local representation-theoretic ingredients are exposed as named bridge hypotheses, while the public theorem path is checked by \Lean.  The axiom audit for the five public results reported here contains only \foundations; the wrapper hypotheses remain ordinary theorem assumptions, not hidden axioms.  A companion spin-out, \code{MechanizedDecisionTheoryWakkerDK.pdf}, is cited as ongoing work on the Wakker/Debreu--Koopmans representation layer imported by the Management Science artifact.
+\end{abstract}
+
+\section{Purpose of the note}
+
+The economic and conceptual contribution is the published Management Science article \cite{LiTsetlinWang2026MS}.  This short companion note has a narrower purpose: it explains what the \Lean artifact proves, which theorem-shaped ingredients it deliberately leaves as named bridges, and how to reproduce the artifact-level axiom audit.
+
+The source file is
+\[
+\code{ClassicalLotteryInAction.lean}.
+\]
+It formalizes classical lotteries as non-empty lists, acts as state-indexed lotteries, and preferences as binary relations on acts.  The file then develops the operations and predicates used in the paper: concatenation, replication, deletion of matched sub-lotteries, relative frequencies, average utility, two-prize matching frequencies, smooth representations, and ambiguity-attitude predicates.
+
+The artifact is not a monolithic formal proof of every representation theorem invoked in the paper.  Instead, it follows a named-bridge architecture: local algebraic, order-theoretic, and finite-sum facts are proved directly, while monograph-scale or non-local representation steps are imported through explicit \code{Prop}-valued hypotheses.  This makes the formal boundary inspectable.
+
+\section{Artifact surface}
+
+The public-facing Lean statements tracked by this note are as follows.
+
+\begin{itemize}[leftmargin=*]
+\item \code{prop_average_utility}: Proposition~1, the average-utility characterization for classical lotteries.  The easy direction from representation to Cancellation and Archimedeanity is proved; the representation-theorem direction is the named bridge \code{AverageUtilityHardDirection}.
+\item \code{lem_gap_filling}: the two-prize matching-frequency gap-filling lemma.  Its reverse implication uses the named strict-separation bridge \code{MatchingFrequencyStrictSeparation}.
+\item \code{thm_smooth_model}: the smooth-representation theorem under explicit Wakker/Debreu--Koopmans-style sufficiency and regularity wrappers.
+\item \code{matching_freq_smooth_formula}: the normalized two-prize formula for behavioral matching frequency, with the inverse-\(\psi\) supremum step named as \code{MatchingFrequencySmoothFormulaBridge}.
+\item \code{prop_aversion_or_seeking}: the ambiguity-aversion/ambiguity-seeking curvature statement.  The easy directions from curvature to behavior are proved; behavioral recovery of curvature is isolated as \code{AmbiguityAttitudeCurvatureBridge}.
+\end{itemize}
+
+The source also defines Axiom~8, \code{Solvability}, and proves boundary lemmas about solvability, but the five rows above are the main theorem-level audit targets corresponding to the formalization-status paragraph in the published paper.
+
+\section{Named-bridge interface}
+\label{sec:bridges}
+
+Table~\ref{tab:bridges} records the bridge interface exposed by \code{ClassicalLotteryInAction.lean}.  The important point is that these are Lean assumptions at theorem boundaries, not additional Lean axioms.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.27\textwidth}>{\raggedright\arraybackslash}p{0.32\textwidth}>{\raggedright\arraybackslash}p{0.33\textwidth}@{}}
+\toprule
+Bridge & Lean role & Mathematical content named by the bridge \\
+\midrule
+\shortstack[l]{\code{AverageUtility}\\\code{HardDirection}\\\code{P}} & Input to \code{prop_average_utility} & The vNM/Wakker-style hard direction: Cancellation plus Archimedeanity produce an average-utility representation on constant classical lotteries. \\
+\addlinespace
+\codestack{MatchingFrequency}{StrictSeparation P} & Input to \code{lem_gap_filling} & On two-prize acts, strict preference implies strict separation of matching frequencies.  The file further decomposes it into \code{TwoPrizeDenseness} and \code{TwoPrizeStrictRelFreq}. \\
+\addlinespace
+\codestack{SmoothRepresentation}{Sufficiency Pref} & Forward direction of \code{thm_smooth_model} & From non-triviality and Axioms~1--7, obtain a smooth representation.  This is the Wakker/Debreu--Koopmans representation-and-patching import. \\
+\addlinespace
+\codestack{SmoothRepresentation}{Regularity Pref} & Reverse regularity part of \code{thm_smooth_model} & From a smooth representation, recover Denseness, Continuity, and Consistent Aggregation; Weak Order, Cancellation, Archimedeanity, and Monotonicity are derived locally. \\
+\addlinespace
+\shortstack[l]{\code{MatchingFrequency}\\\code{SmoothFormulaBridge}\\\code{Pref R}} & Input to \code{matching_freq_smooth_formula} & Under \(u(x)=1\), \(u(y)=0\), identify the behavioral matching frequency with \(\psi^{-1}\!\left(\int \psi(r_x(f(s)))\,dP\right)\).  The integrand simplification is proved separately. \\
+\addlinespace
+\shortstack[l]{\code{AmbiguityAttitude}\\\code{CurvatureBridge}\\\code{Pref R}} & Input to \code{prop_aversion_or_seeking} & Converse Debreu--Koopmans-style curvature recovery: ambiguity aversion implies concavity of \(\psi\), and ambiguity seeking implies convexity. \\
+\bottomrule
+\end{tabular}
+\caption{Named bridges in \code{ClassicalLotteryInAction.lean}.}
+\label{tab:bridges}
+\end{table}
+
+The matching-frequency bridge has an additional useful reduction inside the artifact.  \code{TwoPrizeStrictRelFreq} is theorem-backed once \code{AverageUtilityHardDirection} supplies an average-utility representation, and \code{TwoPrizeDenseness} is derived from primitive \code{Denseness} and \code{Monotonicity} under the same hard-direction bridge.  Thus the \code{_of_averageUtilityHardDirection} route records a single named path from the Proposition~1 representation spine to the gap-filling strict-separation hypothesis.
+
+\section{Axiom audit}
+\label{sec:audit}
+
+The source file contains explicit \texttt{\#print axioms} commands for the five public theorem targets.  Running
+\[
+\code{lake env lean "ClassicalLotteryInAction.lean"}
+\]
+prints the audit in Table~\ref{tab:audit}.  The result is intentionally uniform: every row depends only on the standard Lean/mathlib foundations \foundations.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.29\textwidth}>{\raggedright\arraybackslash}p{0.39\textwidth}>{\raggedright\arraybackslash}p{0.24\textwidth}@{}}
+\toprule
+Public theorem & Paper role & Axiom dependencies reported by Lean \\
+\midrule
+\code{prop_average_utility} & Proposition~1: average utility for classical lotteries & \foundations \\
+\addlinespace
+\code{lem_gap_filling} & Lemma~1: matching-frequency gap filling on two-prize acts & \foundations \\
+\addlinespace
+\code{thm_smooth_model} & Theorem~1: smooth-representation wrapper theorem & \foundations \\
+\addlinespace
+\codestack{matching_freq}{_smooth_formula} & Equation/formula for normalized smooth matching frequency & \foundations \\
+\addlinespace
+\code{prop_aversion_or_seeking} & Proposition~2: ambiguity attitudes and curvature & \foundations \\
+\bottomrule
+\end{tabular}
+\caption{Axiom audit from the artifact.  The bridge hypotheses in Section~\ref{sec:bridges} are theorem assumptions and therefore do not appear as global Lean axioms.}
+\label{tab:audit}
+\end{table}
+
+This audit should be read together with the named-bridge table.  The statement ``no extra axioms'' does not mean that the Wakker/Debreu--Koopmans representation theorem, strict two-prize separation, inverse-\(\psi\) matching-frequency identification, or curvature-recovery arguments have been magically proved.  It means that the artifact exposes those obligations explicitly as parameters, and the checked code downstream of those parameters introduces no additional global assumptions.
+
+\section{Relation to the Wakker/Debreu--Koopmans spin-out}
+
+The file \code{MechanizedDecisionTheoryWakkerDK.pdf} is a separate work-in-progress note on the Wakker additive-representation and Debreu--Koopmans concavity layer \cite{MechanizedWakkerDK2026}.  Its certificate vocabulary is complementary to the bridge surface in \code{ClassicalLotteryInAction.lean}: it studies construction certificates such as \code{hConstruct}, \code{hglobal}, \code{haff}, \code{hConc}, and \code{hPairConc}, together with a certificate checklist in \code{WakkerDebreuKoopmans.lean}.  That spin-out is the appropriate home for the multi-month theorem-prover work behind the imported Wakker/Debreu--Koopmans layer.
+
+The Management Science artifact therefore has a stable publication role: it states and checks the classical-lottery reduction, matching-frequency infrastructure, and smooth-model theorem boundaries used by the published paper.  The Wakker/Debreu--Koopmans spin-out has a different role: to progressively discharge the imported representation certificates without changing the public interface consumed here.
+
+\section{Reproducibility notes}
+
+The audit command used for this note was run from the repository root on Windows:
+\[
+\code{lake env lean "ClassicalLotteryInAction.lean"}.
+\]
+The relevant output was:
+\begin{quote}\small
+\code{'ClassicalLottery.Preference.prop_average_utility' depends on axioms: [propext, Classical.choice, Quot.sound]}\\
+\code{'ClassicalLottery.Preference.lem_gap_filling' depends on axioms: [propext, Classical.choice, Quot.sound]}\\
+\code{'ClassicalLottery.Preference.thm_smooth_model' depends on axioms: [propext, Classical.choice, Quot.sound]}\\
+\code{'ClassicalLottery.Preference.matching_freq_smooth_formula' depends on axioms: [propext, Classical.choice, Quot.sound]}\\
+\code{'ClassicalLottery.Preference.prop_aversion_or_seeking' depends on axioms: [propext, Classical.choice, Quot.sound]}.
+\end{quote}
+
+\begin{thebibliography}{9}
+
+\bibitem{LiTsetlinWang2026MS}
+Jingyuan Li, Ilia Tsetlin, and Fan Wang.
+\newblock \emph{Classical Lottery in Action: Quantifying Risk and Evaluating Uncertainty}.
+\newblock Management Science, 2026.
+
+\bibitem{MechanizedWakkerDK2026}
+Jingyuan Li, Ilia Tsetlin, and Fan Wang.
+\newblock \emph{Certificate-Driven Mechanization of Wakker--Debreu--Koopmans Additive Representation in Lean 4}.
+\newblock Source draft \code{MechanizedDecisionTheoryWakkerDK.pdf}, ongoing work, 2026.
+
+\bibitem{Wakker1989}
+Peter P. Wakker.
+\newblock \emph{Additive Representations of Preferences: A New Foundation of Decision Analysis}.
+\newblock Kluwer Academic Publishers, 1989.
+
+\bibitem{DebreuKoopmans1960}
+Gerard Debreu and Tjalling C. Koopmans.
+\newblock Additively decomposed quasiconvex functions.
+\newblock \emph{Mathematical Programming and Related Techniques}, 1960.
+
+\end{thebibliography}
+
+\end{document}

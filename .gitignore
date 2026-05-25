@@ -5,3 +5,14 @@ build/
 *.ilean
 *.trace
 *.lock
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.xdv
+.build_*.log

@@ -1,0 +1,206 @@
+\documentclass[11pt,english]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{babel}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,citecolor=blue,linkcolor=blue,urlcolor=blue]{hyperref}
+
+\geometry{tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{certificate}[theorem]{Certificate}
+
+\title{A Kernel-Clean Lean Mechanization of Wakker IV.2.7 and the Debreu--Koopmans Hard Direction}
+\author{Submission-facing companion to the Classical Lottery in Action artifact}
+\date{Target venue: \emph{Journal of Automated Reasoning}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present what, to our knowledge, is the first machine-checked proof of Wakker's Theorem~IV.2.7 and the Debreu--Koopmans hard direction from Wakker's six structural axioms.  The Lean~4 / Mathlib artifact is sorry-free, split into reviewer-sized modules, and kernel-axiom-clean: the public regression file \texttt{Wakker/AxiomCheck.lean} prints only \([\mathtt{propext},\ \mathtt{Classical.choice},\ \mathtt{Quot.sound}]\) for the headline theorem surface, the certificate iff-equivalences, the topology-bundle consumers, and the construction-stack closure.  The formalization is organized by certificate decomposition: Wakker's standard-sequence construction, topology transfer, global gluing, uniqueness, and Debreu--Koopmans concavity transfer are exposed as named interfaces and then discharged through a realized closure sequence.  The final Lean route combines the topology ladder T1--T6 with the construction-side chain A4 \(\to\) A1 \(\to\) A3 \(\to\) A2 \(\to\) B \(\to\) C, yielding an end-to-end representation theorem while preserving stable import paths for the Management Science companion artifact.
+\end{abstract}
+
+\section{Introduction and JAR positioning}
+\label{sec:intro}
+
+This paper is the formal-methods companion to the Lean supplementary artifact for \emph{Classical Lottery in Action}.  Its subject is the representation-theoretic layer used by that decision-theory development: Wakker's additive representation theorem for product preferences and the Debreu--Koopmans hard direction transferring convex preference to per-coordinate concavity.  The intended submission venue is the \emph{Journal of Automated Reasoning} (JAR), because the contribution is architectural, long-form, and proof-engineering intensive: it explains how a monograph-scale measurement theorem can be decomposed into auditable Lean interfaces and then closed without adding non-foundational axioms.
+
+The artifact has two public entry points.  The stable import surface is the barrel file
+\begin{center}
+\texttt{WakkerDebreuKoopmans.lean},
+\end{center}
+which re-exports the split modules under \texttt{WakkerDebreuKoopmans/}.  The reviewer-facing audit surface is
+\begin{center}
+\texttt{Wakker/AxiomCheck.lean}.
+\end{center}
+Running that file prints the kernel axioms for the theorem surface and imports the detailed audit block for the M2 frontier, topology consumers, construction stack, and closure equivalences.  The expected output is uniformly \([\mathtt{propext},\ \mathtt{Classical.choice},\ \mathtt{Quot.sound}]\); no project-specific axiom remains.
+
+The core methodological claim is that large measurement theorems should not be mechanized as a single opaque theorem statement.  Instead, each mathematical construction output should be a named certificate with a stable consumer theorem and a regression audit.  This design is especially useful for Wakker IV.2.7: the paper proof spans standard sequences, restricted solvability, Archimedean bracketing, cardinal tradeoffs, topology, and global gluing.  In Lean, those components are more reviewable when they are separated, named, and connected by iff-equivalences.
+
+\paragraph{Contributions.}
+The submission contributes:
+\begin{enumerate}[leftmargin=*]
+\item a Lean formalization of Wakker IV.2.7 and the Debreu--Koopmans hard direction from Wakker's six structural axioms, with stable public wrappers for downstream artifacts;
+\item a certificate architecture that turns monograph-scale proof obligations into independently auditable Lean \texttt{Prop}-valued interfaces;
+\item a realized closure sequence, T1--T6 plus A4 \(\to\) A1 \(\to\) A3 \(\to\) A2 \(\to\) B \(\to\) C, that discharges the former roadmap hypotheses end-to-end;
+\item a dedicated axiom-regression file matching the workspace pattern used by \texttt{Paper2AxiomCheck.lean}, \texttt{Paper5AxiomCheck.lean}, and related artifacts;
+\item an explicit bridge to the Management Science companion, preserving its stable theorem names while documenting that the Wakker/Debreu--Koopmans layer is now theorem-backed.
+\end{enumerate}
+
+\section{Lean artifact and theorem surface}
+\label{sec:artifact}
+
+The artifact repository exposes the Wakker/Debreu--Koopmans development at repository root, with the monolith split into a barrel plus seven submodules:
+
+\begin{center}
+\begin{tabular}{@{}p{0.30\textwidth}p{0.62\textwidth}@{}}
+\toprule
+Module & Role \\
+\midrule
+\texttt{WakkerDebreuKoopmans.Core} & Product-preference infrastructure, additive representations, Wakker IV.2.7 wrapper, Debreu--Koopmans easy and hard wrappers, and core consumers. \\
+\texttt{WakkerDebreuKoopmans.Certificates} & Named certificate predicates and early construction-stack interfaces. \\
+\texttt{WakkerDebreuKoopmans.M2Frontier} & Common-scale uniqueness, corrected tradeoff-transfer predicates, bracketing, rational-image, mesh, and affine-lift machinery. \\
+\texttt{WakkerDebreuKoopmans.ConstructionStack} & S23--S33 standard-sequence construction stack, monograph-level bundles, and alignment data. \\
+\texttt{WakkerDebreuKoopmans.Topology} & T1--T6 topology consumers: preference continuity, connectedness, coordinate continuity, monotonicity equivalences, and topological bundle assembly. \\
+\texttt{WakkerDebreuKoopmans.Closure} & O1--O4 and A4--C closure, including the iff-equivalences tying Stage-5 data to additive representation. \\
+\texttt{WakkerDebreuKoopmans.Audit} & Detailed \texttt{\#print axioms} block imported by \texttt{Wakker/AxiomCheck.lean}. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The headline theorem names audited by \texttt{Wakker/AxiomCheck.lean} include:
+\begin{itemize}[leftmargin=*]
+\item \texttt{WakkerDebreuKoopmans.wakker\_IV\_2\_7};
+\item \texttt{WakkerDebreuKoopmans.debreu\_koopmans\_hard};
+\item \texttt{WakkerRoadmap.WakkerExistence.wakker\_IV\_2\_7\_consumer};
+\item \texttt{WakkerRoadmap.DebreuKoopmansHard.debreu\_koopmans\_hard\_consumer};
+\item the closure equivalences \texttt{additiveRepHypothesisBundle\_iff\_wakkerConstructionCertificate}, \texttt{additiveRepHypothesisBundle\_iff\_wakkerStage5AdditiveAssemblyData}, \texttt{wakkerStage5GlobalGluingData\_iff\_wakkerStage5AdditiveAssemblyData}, and \texttt{wakkerStage5GlobalGluingData\_iff\_additiveRepHypothesisBundle};
+\item the topology-bundle consumers \texttt{wakkerMonographTopologyHalfInputCertificate\_of\_wakkerTopologicalAxiomBundle}, \texttt{wakkerMonographLevelInputCertificate\_of\_wakkerTopologicalAxiomBundle}, \texttt{wakkerRawOutputs\_of\_wakkerTopologicalAxiomBundle}, and \texttt{integerRefinement\_and\_fullContinuity\_of\_wakkerTopologicalAxiomBundle}.
+\end{itemize}
+
+The audit target is intentionally separate from the mathematical barrel.  Reviewers who want the theorem API import \texttt{WakkerDebreuKoopmans}; reviewers who want the kernel-dependency report run \texttt{lake build Wakker.AxiomCheck}.
+
+\section{Certificate architecture and closure sequence}
+\label{sec:method}
+
+The proof is organized around certificates, each recording a specific construction output of Wakker's or Debreu--Koopmans's paper argument.  A certificate is not a vague assumption: it is a Lean proposition with a precise consumer theorem and, where appropriate, iff-equivalences proving that the certificate surface is exactly the desired downstream interface.
+
+\subsection{The five certificate families}
+
+The high-level families are:
+\begin{enumerate}[label=\textbf{C\arabic*.},leftmargin=*]
+\item \textbf{Wakker construction.}  Standard-sequence data, pairwise slice representations, grid calibration, and all-pairs additivity.
+\item \textbf{Global gluing.}  Passage from compatible pairwise data to a single additive representation on the full product.
+\item \textbf{Uniqueness.}  Common positive scale and coordinate-specific translations for two additive representations of the same essential-coordinate preference.
+\item \textbf{Two-coordinate concavity.}  The Debreu--Koopmans upgrade from slice quasi-concavity and continuity to true two-coordinate concavity.
+\item \textbf{Per-coordinate transfer.}  The pivot-indexed transfer from pair concavity and coordinate-image coverage to full per-coordinate concavity.
+\end{enumerate}
+
+Earlier drafts treated these families as a roadmap.  The current artifact treats them as an audit trail: the consumer theorems remain because they are valuable stable interfaces, but the construction-side hypotheses have theorem-backed discharge routes.
+
+\subsection{Topology ladder T1--T6}
+
+The topology side proves the analytic consumers needed by the construction stack.  T1 packages preference continuity and closed indifference sets.  T2 supplies connectedness and the interval-image argument for real coordinates.  T3 proves continuity of coordinate utilities from connectedness, monotonicity, continuity, and unboundedness, and closes the monotonicity-certificate equivalence.  T4 proves the alignment theorem: under additive representation, the balance equation plus strict reference ordering supplies the descending/ascending seed alignment.  T5 packages these results into \texttt{WakkerTopologicalAxiomBundle}.  T6 discharges the bracketing-pair component from coordinate-utility unboundedness.
+
+The resulting topology consumers are the main bridge from Wakker's structural axioms to the construction stack.  They are all included in the axiom audit.
+
+\subsection{Construction-side chain A4--C}
+
+The construction-side closure landed as the chain
+\[
+\mathrm{A4} \to \mathrm{A1} \to \mathrm{A3} \to \mathrm{A2} \to \mathrm{B} \to \mathrm{C}.
+\]
+A4 supplies the shared pivot-coordinate representation data for the Step-4 to Step-5 lift.  A1 packages all-pairs additivity for one global utility family.  A3 proves strict monotonicity for that family, and A2 proves coordinate-image coverage.  Priority B closes the quasi-to-concave strengthening.  Priority C transfers pivot-based pair concavity to per-coordinate concavity.  Together with T1--T6, this produces the end-to-end Wakker/Debreu--Koopmans route recorded in \texttt{WakkerDebreuKoopmans.Closure}.
+
+\section{M2 uniqueness as a completed case study}
+\label{sec:m2}
+
+The M2 frontier, formerly presented as a partial discharge of the uniqueness certificate, is now best read as a completed case study in the certificate method.  The public uniqueness consumer is \texttt{additive\_rep\_unique}: given two additive representations of an essential-coordinate product preference, it returns a common positive scale and coordinate-specific translations.  The proof factors the hard content through \texttt{AdditiveCommonScaleCertificate} and \texttt{TradeoffTransferCertificate}.
+
+The key proof-engineering lesson was a failed diagnostic predicate.  A first version of \texttt{UtilityValueRealizingEquivalence} forced a fixed reference-pair difference to equal an arbitrary prescribed difference; Lean exposed the contradiction in the \texttt{Bool \(\to\) \(\mathbb{R}\)} additive model.  The corrected predicate lets the reference pair vary, after which off-diagonal transfer, on-coordinate ratio consistency, and coordinate-affine lift become separately theorem-backed interfaces.
+
+The final M2 route is multi-layered but clean:
+\begin{enumerate}[leftmargin=*]
+\item corrected utility-value realization plus bracketing yields off-diagonal tradeoff transfer;
+\item same-coordinate ratio consistency follows either through a triangle argument or through the stronger coordinate-affine lift;
+\item coordinate-affine lift is theorem-backed from strict standard-sequence arithmetic, monotonicity, rational-image coverage, and grid density;
+\item rational-image and grid-density targets factor through the refined mesh-family and rational-refinement/bisection certificates;
+\item the common-scale certificate then feeds the affine uniqueness consumer.
+\end{enumerate}
+
+This section is not the headline contribution by itself.  It is one of the five completed certificate families, and it illustrates why the artifact uses named certificates rather than a monolithic proof: Lean's typechecker made the false diagnostic predicate impossible to hide, and the corrected route became reusable in later closure steps.
+
+\section{Axiom audit and reviewer protocol}
+\label{sec:audit}
+
+The artifact follows the workspace-standard audit pattern: a single regression file imports the public surface and lists theorem names under \texttt{\#print axioms}.  For this submission the file is \texttt{Wakker/AxiomCheck.lean}.  It extends the detailed split-module audit with the headline theorem names and stable core consumers.
+
+The recommended reviewer protocol is:
+\begin{enumerate}[leftmargin=*]
+\item build the theorem surface: \texttt{lake build WakkerDebreuKoopmans};
+\item run the public axiom audit: \texttt{lake build Wakker.AxiomCheck};
+\item build the Management Science companion surface: \texttt{lake build ClassicalLotteryInAction};
+\item compile this paper with \texttt{latexmk}.
+\end{enumerate}
+
+The audit criterion is intentionally minimal and kernel-level: every printed theorem may depend on \texttt{propext}, \texttt{Classical.choice}, and \texttt{Quot.sound}, but on no project-specific axiom.  This is the same standard used elsewhere in the workspace for paper-facing theorem inventories.
+
+\section{Related work and novelty}
+\label{sec:related}
+
+\paragraph{Measure theory and probability formalizations.}
+Isabelle/HOL has a mature tradition of measure-theory and probability formalization, including the Hölzl/Heller style of building reusable measure spaces, kernels, and integration libraries.  Avigad-style formalizations of probability and analysis similarly demonstrate that long analytic arguments can be made machine-checkable when the surrounding library is strong enough.  Our work is methodologically aligned with that tradition: the submission is not about inventing a new calculus tactic, but about turning a paper proof in mathematical economics into a reusable theorem-prover artifact with explicit audit boundaries.  The mathematical target differs, however.  Wakker IV.2.7 is not primarily a measure-theoretic theorem; it is a cardinal measurement theorem about product preferences, standard sequences, and tradeoff consistency.
+
+\paragraph{Mathlib convex analysis.}
+Mathlib's \texttt{Analysis.Convex} hierarchy supplies much of the ambient convex-analysis vocabulary used here: convex sets, concave functions, quasi-convexity/quasi-concavity, Jensen-style infrastructure, connectedness, and continuity tools.  Those libraries do not contain a multi-attribute utility theory, Wakker-style standard sequences, tradeoff consistency, or Debreu--Koopmans additive decomposition.  The present artifact therefore uses Mathlib's convex primitives but contributes a decision-theoretic layer above them.
+
+\paragraph{Absence of prior Wakker mechanization.}
+We performed targeted keyword searches for \texttt{additive representation}, \texttt{tradeoff consistency}, \texttt{Debreu}, \texttt{Wakker}, and \texttt{Koopmans}.  GitHub text search over \texttt{leanprover-community/mathlib4}, \texttt{coq-community}, \texttt{isabelle-prover/mirror-afp}, and \texttt{mizar} returned no matching Wakker/Debreu--Koopmans formalization hits.  A local search of the checked-out Mathlib tree for the same Wakker/Debreu/tradeoff terminology returned no hits.  This is negative search evidence rather than an exhaustive bibliographic theorem, but it supports the novelty claim: we are not aware of a prior mechanization of Wakker's additive representation theorem, tradeoff consistency, or the Debreu--Koopmans hard direction in Lean, Coq, Isabelle/AFP, or Mizar/MML-style libraries.
+
+\paragraph{Economics formalization wave.}
+Recent economics formalizations in Lean and Coq have focused heavily on ordinal aggregation and social-choice impossibility: Arrow-style theorems, Gibbard--Satterthwaite, Hylland--Zeckhauser, and related mechanism-design or matching results.  Those are important but structurally different from this work.  They reason about rankings, voters, alternatives, strategyproofness, or allocations.  Wakker/Debreu--Koopmans is a cardinal measurement theorem: the central objects are real-valued coordinate utilities, additive sums, standard-sequence calibration, and concavity transfer.  The proof engineering burden is therefore analytic and representation-theoretic rather than purely combinatorial or ordinal.
+
+\section{Connection to the Management Science companion}
+\label{sec:ms}
+
+The Management Science artifact \texttt{ClassicalLotteryInAction.lean} remains stable.  Its smooth-representation theorem is intentionally written through named wrapper predicates, including \texttt{SmoothRepresentationSufficiency} and \texttt{SmoothRepresentationRegularity}.  For the MS submission timeline, the low-risk integration path is to keep those theorem names and cross-link them to the now-discharged Wakker/Debreu--Koopmans artifact rather than rewrite the MS-facing theorem statements.
+
+This choice preserves two things reviewers care about.  First, the MS file's public API does not churn: downstream references to \texttt{thm\_smooth\_model} continue to elaborate.  Second, the formal-methods companion can cite the stronger audit result: the W/DK layer is no longer merely a named external hypothesis; it has a separate end-to-end, kernel-clean discharge in \texttt{WakkerDebreuKoopmans} and \texttt{Wakker/AxiomCheck.lean}.  The wrapper predicates in the MS artifact now function as a stable abstraction boundary between the economic model and the representation-theoretic proof, not as a claim that the W/DK theorem remains unproved.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+The Wakker/Debreu--Koopmans artifact has reached the intended end-to-end state.  The original monolith has been split into reviewer-sized Lean modules, the roadmap certificates have become a discharged audit trail, the topology ladder T1--T6 and construction chain A4--C are theorem-backed, and the public theorem surface is checked by \texttt{Wakker/AxiomCheck.lean}.  The result is a submission-ready formal-methods companion: a sorry-free, kernel-axiom-clean Lean mechanization of a monograph-scale cardinal measurement theorem and its Debreu--Koopmans concavity consequence.
+
+\begin{thebibliography}{9}
+
+\bibitem{Wakker1989}
+Peter Wakker.
+\newblock \emph{Additive Representations of Preferences: A New Foundation of Decision Analysis}.
+\newblock Kluwer Academic Publishers, 1989.
+
+\bibitem{DebreuKoopmans1982}
+Gerard Debreu and Tjalling Koopmans.
+\newblock Additively decomposed quasiconvex functions.
+\newblock \emph{Mathematical Programming}, 24:1--38, 1982.
+
+\bibitem{Mathlib}
+The Mathlib Community.
+\newblock \emph{The Lean mathematical library}.
+\newblock \url{https://github.com/leanprover-community/mathlib4}.
+
+\bibitem{AFP}
+The Isabelle Archive of Formal Proofs.
+\newblock \url{https://www.isa-afp.org/}.
+
+\end{thebibliography}
+
+\end{document}

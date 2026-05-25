@@ -29,8 +29,6 @@ This artifact is **complete, end-to-end**:
 | `WakkerDebreuKoopmans/*.lean` | Reviewer-sized split proof modules: core, certificates, M2 frontier, construction stack, topology, closure, and audit. |
 | `Wakker/AxiomCheck.lean` | One-file public axiom regression printing the headline theorem surface. |
 
-This repository intentionally presents the companion as a PDF artifact rather than a TeX source bundle.
-
 ## Minimal verification
 
 From the repository root:

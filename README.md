@@ -39,6 +39,26 @@ From the repository root:
 
 The root `lakefile.lean` exposes the artifact as a standalone Lean project and includes the reviewer regression root `Wakker.AxiomCheck`.
 
+## Running code in Lean Web Editor
+
+If you want a quick browser-based check without installing Lean locally, you can use the [Lean Web Editor](https://live.lean-lang.org/).
+
+The easiest entry point for the browser editor is `ClassicalLotteryInAction.lean`:
+
+1. Open the Lean Web Editor.
+2. Copy the contents of `ClassicalLotteryInAction.lean` from this repository and paste them into the editor.
+3. Wait for the Mathlib imports to finish loading.
+4. Try a few quick checks such as:
+
+   ```lean
+   #check ClassicalLottery.prop_average_utility
+   #check ClassicalLottery.thm_smooth_model
+   #check ClassicalLottery.matching_freq_smooth_formula
+   #check ClassicalLottery.prop_aversion_or_seeking
+   ```
+
+This browser workflow is best for quick inspection of the main standalone file. The split Wakker--Debreu--Koopmans stack (`WakkerDebreuKoopmans.lean`, `Wakker/AxiomCheck.lean`, and the files under `WakkerDebreuKoopmans/`) uses local multi-file imports, so it is better run in a local Lean project with the `lake build ...` commands listed above.
+
 ## Where to start
 
 If you want the quickest reviewer pass:

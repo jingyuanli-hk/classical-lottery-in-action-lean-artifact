@@ -11,13 +11,17 @@ The repository contains the Lean 4 / Mathlib formalization of:
 
 ## Current status
 
-This artifact is **complete, end-to-end**:
+**Verified (sorry-free, kernel-clean):**
 
-- the topology-side chain `T1–T6` is discharged;
-- the construction-side chain `A4 → A1 → A3 → A2 → B → C` is discharged;
-- `WakkerDebreuKoopmans.lean` closes the Wakker IV.2.7 / Debreu--Koopmans route from Wakker's six structural axioms;
-- `Wakker/AxiomCheck.lean` is the one-file reviewer regression for the public theorem surface;
-- every public theorem in the artifact audits only `[propext, Classical.choice, Quot.sound]`.
+- every public theorem on the audited surface (`Wakker/AxiomCheck.lean`) — `wakker_IV_2_7`, `debreu_koopmans_hard`, the `AdditiveRep` consumers, and the Management Science theorems `prop_average_utility`, `lem_gap_filling`, `thm_smooth_model`, `matching_freq_smooth_formula`, `prop_aversion_or_seeking` — audits only `[propext, Classical.choice, Quot.sound]`;
+- the topology ladder `T1–T6` and the construction-side wiring `A4 → A1 → A3 → A2 → B → C` are discharged as machine-checked implications;
+- no project-specific axioms appear in the audited surface, and there is no `sorry`.
+
+**Honest scope (what "audits clean" does and does not mean):**
+
+- `wakker_IV_2_7` is a *conditional* wrapper: it consumes the additive-representation construction as an explicit, clearly-labelled hypothesis (`hConstruct`). The clean audit therefore certifies the packaging and reduction layers — **not** a forward proof from the bare structural axioms. The same applies to `debreu_koopmans_hard` (via `hConcAll`).
+- That deep construction is reduced to a *single* proven-necessary structural input (the cross-pair Thomsen / double-cancellation hexagon, equivalently the per-slice grid representation), with **both** links of the §IV.5 construction assembled end-to-end around it. That input is **machine-checked irreducible** from Wakker's ordinal axioms {coordinate independence + restricted solvability + Archimedean + topology} (a concrete model satisfies independence on every coordinate yet violates the hexagon), and a sound cardinal-grid companion discharges the same conclusion once a coordinate scale is supplied.
+- See `ClassicalLotteryInAction_companion.pdf` for the full account, the certificate architecture, and the irreducibility analysis.
 
 ## Public-facing files
 

@@ -71,3 +71,15 @@ If you want the quickest reviewer pass:
 2. Run `lake build Wakker.AxiomCheck` to see the public kernel-axiom audit.
 3. Open `WakkerDebreuKoopmans.lean`, then follow the split files under `WakkerDebreuKoopmans/`.
 4. Read `ClassicalLotteryInAction.lean` for the Management Science-facing theorem surface.
+
+## Citation
+
+> Jingyuan Li, Ilia Tsetlin, and Fan Wang.
+> *A Kernel-Clean Lean Mechanization of Classical Lottery in Action
+and the Wakker–Debreu–Koopmans Representation Layer*
+
+Please also cite the Management Science paper:
+
+> Jingyuan Li, Ilia Tsetlin, and Fan Wang (2026),
+> *Classical Lottery in Action: Quantifying Risk and Evaluating Uncertainty*,
+> Management Science. DOI: [10.1287/mnsc.2023.04202](https://doi.org/10.1287/mnsc.2023.04202) 

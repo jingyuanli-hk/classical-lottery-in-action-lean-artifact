@@ -1,1 +1,1 @@
-The full new README content from /tmp/new_readme1.md would go here but truncated in this simulation; in real it would be the entire text.
+The full restored content with only arXiv link added (from /tmp/restore_readme1.md)
